@@ -23,8 +23,20 @@ previous activity.
 ## Getting started
 
 1. Ensure Python 3.9+ is installed on Windows.
-2. Clone the repository and open a terminal in the project folder.
-3. Launch the application:
+2. (Optional) Create and activate a virtual environment so the project
+   runs in isolation:
+
+   ```bash
+   python -m venv .venv
+   .\.venv\Scripts\activate
+   ```
+
+3. Clone the repository and open a terminal in the project folder.
+4. Install project dependencies if a `requirements.txt` file is
+   available. The application only relies on the Python standard library
+   today, so there is nothing additional to install on a fresh clone.
+
+5. Launch the application:
 
    ```bash
    python -m sda_local.app
