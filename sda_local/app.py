@@ -72,6 +72,36 @@ class SDALocalApp(tk.Tk):
 
         DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+        self.style = ttk.Style(self)
+        if "clam" in self.style.theme_names():
+            self.style.theme_use("clam")
+        self.dark_mode = tk.BooleanVar(value=False)
+        self._text_widgets: List[tk.Text] = []
+        self._light_palette = {
+            "background": "#f0f0f0",
+            "frame": "#ffffff",
+            "foreground": "#202020",
+            "input": "#ffffff",
+            "input_fg": "#202020",
+            "accent": "#2c6bed",
+            "tree_background": "#ffffff",
+            "tree_field": "#f5f5f5",
+            "tree_foreground": "#202020",
+            "border": "#cccccc",
+        }
+        self._dark_palette = {
+            "background": "#1e1e1e",
+            "frame": "#2b2b2b",
+            "foreground": "#f5f5f5",
+            "input": "#3c3c3c",
+            "input_fg": "#f5f5f5",
+            "accent": "#3b82f6",
+            "tree_background": "#2b2b2b",
+            "tree_field": "#1f1f1f",
+            "tree_foreground": "#f5f5f5",
+            "border": "#4a4a4a",
+        }
+
         self.data: Dict[str, List[Dict[str, Any]]] = {
             "events": [],
             "finance": [],
@@ -79,6 +109,8 @@ class SDALocalApp(tk.Tk):
             "chat": [],
         }
         self._load_data()
+
+        self._create_menubar()
 
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -89,6 +121,7 @@ class SDALocalApp(tk.Tk):
         self._build_projects_tab()
 
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+        self._apply_theme()
 
     # ------------------------------------------------------------------
     # Data handling
@@ -134,6 +167,7 @@ class SDALocalApp(tk.Tk):
 
         ttk.Label(form_frame, text="Description").grid(row=1, column=0, sticky=tk.NW, padx=5, pady=5)
         self.event_description = tk.Text(form_frame, height=4)
+        self._register_text_widget(self.event_description)
         self.event_description.grid(row=1, column=1, columnspan=3, sticky=tk.EW, padx=5, pady=5)
 
         form_frame.columnconfigure(1, weight=1)
@@ -158,6 +192,7 @@ class SDALocalApp(tk.Tk):
         self.events_tree.bind("<<TreeviewSelect>>", self._show_event_details)
 
         self.event_details = tk.Text(list_frame, height=6, state=tk.DISABLED)
+        self._register_text_widget(self.event_details)
         self.event_details.pack(fill=tk.X, padx=5, pady=5)
 
         for event in self.data.get("events", []):
@@ -344,6 +379,7 @@ class SDALocalApp(tk.Tk):
         chat_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         self.chat_display = tk.Text(chat_frame, state=tk.DISABLED, height=12)
+        self._register_text_widget(self.chat_display)
         self.chat_display.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         entry_frame = ttk.Frame(chat_frame)
@@ -420,6 +456,7 @@ class SDALocalApp(tk.Tk):
 
         ttk.Label(form_frame, text="Description").grid(row=3, column=0, padx=5, pady=5, sticky=tk.NW)
         self.project_description = tk.Text(form_frame, height=4)
+        self._register_text_widget(self.project_description)
         self.project_description.grid(row=3, column=1, columnspan=3, padx=5, pady=5, sticky=tk.EW)
 
         button_frame = ttk.Frame(form_frame)
@@ -444,6 +481,7 @@ class SDALocalApp(tk.Tk):
         self.projects_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         self.project_details = tk.Text(list_frame, height=6, state=tk.DISABLED)
+        self._register_text_widget(self.project_details)
         self.project_details.pack(fill=tk.X, padx=5, pady=5)
         self.projects_tree.bind("<<TreeviewSelect>>", self._show_project_details)
 
@@ -565,6 +603,99 @@ class SDALocalApp(tk.Tk):
         self.project_details.configure(state=tk.DISABLED)
         self._save_data()
 
+
+    def _create_menubar(self) -> None:
+        menubar = tk.Menu(self)
+        view_menu = tk.Menu(menubar, tearoff=0)
+        view_menu.add_checkbutton(
+            label="Dark mode",
+            variable=self.dark_mode,
+            command=self._toggle_dark_mode,
+        )
+        menubar.add_cascade(label="View", menu=view_menu)
+        self.config(menu=menubar)
+        self._menubar = menubar
+
+    def _register_text_widget(self, widget: tk.Text) -> None:
+        self._text_widgets.append(widget)
+
+    def _style_text_widget(self, widget: tk.Text, palette: Dict[str, str]) -> None:
+        widget.configure(
+            bg=palette["input"],
+            fg=palette["input_fg"],
+            insertbackground=palette["input_fg"],
+            highlightbackground=palette["border"],
+            highlightcolor=palette["border"],
+        )
+
+    def _apply_theme(self) -> None:
+        palette = self._dark_palette if self.dark_mode.get() else self._light_palette
+
+        self.configure(bg=palette["background"])
+        self.option_add("*foreground", palette["foreground"])
+        self.option_add("*background", palette["frame"])
+        self.option_add("*highlightBackground", palette["border"])
+        self.option_add("*highlightColor", palette["border"])
+        self.option_add("*TCombobox*Listbox*Background", palette["input"])
+        self.option_add("*TCombobox*Listbox*Foreground", palette["input_fg"])
+
+        self.style.configure("TFrame", background=palette["frame"], foreground=palette["foreground"])
+        self.style.configure("TLabelframe", background=palette["frame"], foreground=palette["foreground"])
+        self.style.configure("TLabelframe.Label", background=palette["frame"], foreground=palette["foreground"])
+        self.style.configure("TLabel", background=palette["frame"], foreground=palette["foreground"])
+        self.style.configure("TButton", background=palette["frame"], foreground=palette["foreground"])
+        self.style.map(
+            "TButton",
+            background=[("active", palette["accent"])],
+            foreground=[("active", palette["foreground"])],
+        )
+        self.style.configure("TNotebook", background=palette["background"], bordercolor=palette["border"])
+        self.style.configure(
+            "TNotebook.Tab",
+            background=palette["frame"],
+            foreground=palette["foreground"],
+            padding=(10, 5),
+        )
+        self.style.map(
+            "TNotebook.Tab",
+            background=[("selected", palette["accent"])],
+            foreground=[("selected", palette["foreground"])],
+        )
+        self.style.configure(
+            "TEntry",
+            fieldbackground=palette["input"],
+            foreground=palette["input_fg"],
+            background=palette["frame"],
+        )
+        self.style.configure(
+            "TCombobox",
+            fieldbackground=palette["input"],
+            foreground=palette["input_fg"],
+            background=palette["frame"],
+        )
+        self.style.configure(
+            "Treeview",
+            background=palette["tree_background"],
+            fieldbackground=palette["tree_field"],
+            foreground=palette["tree_foreground"],
+            bordercolor=palette["border"],
+        )
+        self.style.configure(
+            "Treeview.Heading",
+            background=palette["frame"],
+            foreground=palette["foreground"],
+        )
+        self.style.map(
+            "Treeview",
+            background=[("selected", palette["accent"])],
+            foreground=[("selected", palette["foreground"])],
+        )
+
+        for text_widget in self._text_widgets:
+            self._style_text_widget(text_widget, palette)
+
+    def _toggle_dark_mode(self) -> None:
+        self._apply_theme()
 
 def main() -> None:
     """Launch the sdaLocal desktop application."""
