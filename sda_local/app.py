@@ -102,6 +102,8 @@ class SDALocalApp(tk.Tk):
             "border": "#4a4a4a",
         }
 
+        self._setup_custom_themes()
+
         self.data: Dict[str, List[Dict[str, Any]]] = {
             "events": [],
             "finance": [],
@@ -626,76 +628,131 @@ class SDALocalApp(tk.Tk):
             insertbackground=palette["input_fg"],
             highlightbackground=palette["border"],
             highlightcolor=palette["border"],
+            selectbackground=palette["accent"],
+            selectforeground=palette["foreground"],
         )
 
     def _apply_theme(self) -> None:
         palette = self._dark_palette if self.dark_mode.get() else self._light_palette
+        theme_name = "sdalocal-dark" if self.dark_mode.get() else "sdalocal-light"
+
+        self.style.theme_use(theme_name)
 
         self.configure(bg=palette["background"])
-        self.option_add("*foreground", palette["foreground"])
-        self.option_add("*background", palette["frame"])
-        self.option_add("*highlightBackground", palette["border"])
-        self.option_add("*highlightColor", palette["border"])
-        self.option_add("*TCombobox*Listbox*Background", palette["input"])
-        self.option_add("*TCombobox*Listbox*Foreground", palette["input_fg"])
-
-        self.style.configure("TFrame", background=palette["frame"], foreground=palette["foreground"])
-        self.style.configure("TLabelframe", background=palette["frame"], foreground=palette["foreground"])
-        self.style.configure("TLabelframe.Label", background=palette["frame"], foreground=palette["foreground"])
-        self.style.configure("TLabel", background=palette["frame"], foreground=palette["foreground"])
-        self.style.configure("TButton", background=palette["frame"], foreground=palette["foreground"])
-        self.style.map(
-            "TButton",
-            background=[("active", palette["accent"])],
-            foreground=[("active", palette["foreground"])],
-        )
-        self.style.configure("TNotebook", background=palette["background"], bordercolor=palette["border"])
-        self.style.configure(
-            "TNotebook.Tab",
+        self.tk_setPalette(
             background=palette["frame"],
             foreground=palette["foreground"],
-            padding=(10, 5),
-        )
-        self.style.map(
-            "TNotebook.Tab",
-            background=[("selected", palette["accent"])],
-            foreground=[("selected", palette["foreground"])],
-        )
-        self.style.configure(
-            "TEntry",
-            fieldbackground=palette["input"],
-            foreground=palette["input_fg"],
-            background=palette["frame"],
-        )
-        self.style.configure(
-            "TCombobox",
-            fieldbackground=palette["input"],
-            foreground=palette["input_fg"],
-            background=palette["frame"],
-        )
-        self.style.configure(
-            "Treeview",
-            background=palette["tree_background"],
-            fieldbackground=palette["tree_field"],
-            foreground=palette["tree_foreground"],
-            bordercolor=palette["border"],
-        )
-        self.style.configure(
-            "Treeview.Heading",
-            background=palette["frame"],
-            foreground=palette["foreground"],
-        )
-        self.style.map(
-            "Treeview",
-            background=[("selected", palette["accent"])],
-            foreground=[("selected", palette["foreground"])],
+            activeBackground=palette["accent"],
+            activeForeground=palette["foreground"],
+            highlightColor=palette["border"],
+            selectBackground=palette["accent"],
+            selectForeground=palette["foreground"],
+            insertBackground=palette["input_fg"],
         )
 
         for text_widget in self._text_widgets:
             self._style_text_widget(text_widget, palette)
 
+        if hasattr(self, "_menubar"):
+            self._style_menu(self._menubar, palette)
+
     def _toggle_dark_mode(self) -> None:
         self._apply_theme()
+
+    def _setup_custom_themes(self) -> None:
+        base_theme = "clam" if "clam" in self.style.theme_names() else self.style.theme_use()
+        for theme_name, palette in (
+            ("sdalocal-light", self._light_palette),
+            ("sdalocal-dark", self._dark_palette),
+        ):
+            if theme_name in self.style.theme_names():
+                self.style.theme_delete(theme_name)
+            self.style.theme_create(
+                theme_name,
+                parent=base_theme,
+                settings={
+                    "TFrame": {"configure": {"background": palette["frame"], "foreground": palette["foreground"]}},
+                    "TLabelframe": {"configure": {"background": palette["frame"], "foreground": palette["foreground"], "bordercolor": palette["border"]}},
+                    "TLabelframe.Label": {"configure": {"background": palette["frame"], "foreground": palette["foreground"]}},
+                    "TLabel": {"configure": {"background": palette["frame"], "foreground": palette["foreground"]}},
+                    "TButton": {
+                        "configure": {"background": palette["frame"], "foreground": palette["foreground"]},
+                        "map": {
+                            "background": [("active", palette["accent"])],
+                            "foreground": [("active", palette["foreground"])],
+                        },
+                    },
+                    "TNotebook": {"configure": {"background": palette["background"], "bordercolor": palette["border"]}},
+                    "TNotebook.Tab": {
+                        "configure": {
+                            "background": palette["frame"],
+                            "foreground": palette["foreground"],
+                            "padding": (10, 5),
+                        },
+                        "map": {
+                            "background": [("selected", palette["accent"])],
+                            "foreground": [("selected", palette["foreground"])],
+                        },
+                    },
+                    "TEntry": {
+                        "configure": {
+                            "fieldbackground": palette["input"],
+                            "foreground": palette["input_fg"],
+                            "background": palette["frame"],
+                            "insertcolor": palette["input_fg"],
+                        }
+                    },
+                    "TCombobox": {
+                        "configure": {
+                            "fieldbackground": palette["input"],
+                            "foreground": palette["input_fg"],
+                            "background": palette["frame"],
+                        },
+                        "map": {
+                            "fieldbackground": [
+                                ("readonly", palette["input"]),
+                                ("!disabled", palette["input"]),
+                            ],
+                            "foreground": [
+                                ("readonly", palette["input_fg"]),
+                                ("!disabled", palette["input_fg"]),
+                            ],
+                        },
+                    },
+                    "Treeview": {
+                        "configure": {
+                            "background": palette["tree_background"],
+                            "fieldbackground": palette["tree_field"],
+                            "foreground": palette["tree_foreground"],
+                            "bordercolor": palette["border"],
+                        },
+                        "map": {
+                            "background": [("selected", palette["accent"])],
+                            "foreground": [("selected", palette["foreground"])],
+                        },
+                    },
+                    "Treeview.Heading": {
+                        "configure": {"background": palette["frame"], "foreground": palette["foreground"]}
+                    },
+                },
+            )
+
+    def _style_menu(self, menu: tk.Menu, palette: Dict[str, str]) -> None:
+        menu.configure(
+            background=palette["frame"],
+            foreground=palette["foreground"],
+            activebackground=palette["accent"],
+            activeforeground=palette["foreground"],
+            bd=0,
+            relief=tk.FLAT,
+        )
+        last_index = menu.index("end")
+        if last_index is None:
+            return
+        for index in range(last_index + 1):
+            if menu.type(index) == "cascade":
+                submenu = menu.nametowidget(menu.entrycget(index, "menu"))
+                self._style_menu(submenu, palette)
 
 def main() -> None:
     """Launch the sdaLocal desktop application."""
