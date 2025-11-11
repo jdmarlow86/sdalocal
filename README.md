@@ -45,6 +45,38 @@ previous activity.
 The application window will open with dedicated tabs for each functional
 area. Data is automatically saved when the window closes.
 
+## Building a Windows executable
+
+An installer script is provided to bundle the application into a
+Windows-friendly `.exe` file using [PyInstaller](https://pyinstaller.org/).
+
+1. Install PyInstaller in your environment:
+
+   ```bash
+   pip install pyinstaller
+   ```
+
+2. Run the build helper from the project root:
+
+   ```bash
+   python installer/build_exe.py
+   ```
+
+   The script removes any previous `build/` and `dist/` folders before
+   invoking PyInstaller in one-file, windowed mode. When it finishes an
+   executable named `sdaLocal.exe` will be available in `dist/`.
+
+3. (Optional) To create a folder-based distribution instead of a single
+   executable, add the `--onedir` flag:
+
+   ```bash
+   python installer/build_exe.py --onedir
+   ```
+
+The generated executable stores its data under the user's application
+data directory (for example `%APPDATA%\sdaLocal` on Windows) so state is
+preserved across launches.
+
 ## Development notes
 
 - The code lives in `sda_local/app.py` with supporting models and
