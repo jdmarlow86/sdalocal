@@ -13,6 +13,8 @@ The application provides the following features:
 from __future__ import annotations
 
 import json
+import os
+import sys
 import tkinter as tk
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -24,7 +26,24 @@ import webbrowser
 from tkinter import ttk
 
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
+
+def _determine_data_dir() -> Path:
+    """Return the directory where persistent application data is stored."""
+
+    if getattr(sys, "frozen", False):  # Running from a bundled executable.
+        app_folder = "sdaLocal"
+        if sys.platform.startswith("win"):
+            base_dir = Path(os.environ.get("APPDATA", Path.home()))
+        elif sys.platform == "darwin":
+            base_dir = Path.home() / "Library" / "Application Support"
+        else:
+            base_dir = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+        return base_dir / app_folder
+
+    return Path(__file__).resolve().parent / "data"
+
+
+DATA_DIR = _determine_data_dir()
 DATA_FILE = DATA_DIR / "sdalocal_data.json"
 
 
